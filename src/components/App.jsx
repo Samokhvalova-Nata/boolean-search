@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import  css from './App.module.css';
 
+const BASE_URL = 'http://example.com/api/search?'
+
 export const App = () => {
   const [includeInput, setIncludeInput] = useState('');
   const [excludeInput, setExcludeInput] = useState('');
   const [tags, setTags] = useState([]);
 
-  const handleIncludeInputChange = (event) => {
-    setIncludeInput(event.target.value);
-  };
-
-  const handleExcludeInputChange = (event) => {
-    setExcludeInput(event.target.value);
+  const handleInputChange = (event) => {
+    const {name, value} = event.target;
+    name === 'include' ? setIncludeInput(value) : setExcludeInput(value)
   };
 
   const handleIncludeInputKeyPress = (event) => {
@@ -25,13 +24,17 @@ export const App = () => {
   const handleExcludeInputKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      addTag(excludeInput);
+      addTag('-' + excludeInput);
       setExcludeInput('');
     }
   };
 
   const addTag = (text) => {
     if (text.trim() === '') return;
+    if (tags.includes(text.trim())) {
+      alert('This tag is already exsist');
+    return;
+  }
     setTags([...tags, text]);
   };
 
@@ -41,34 +44,57 @@ export const App = () => {
     setTags(newTags);
   };
 
-  const generateSearchRequest = () => {
-    const searchRequest = {'job_title': tags.join('AND')};
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const searchRequest = {'job_title': tags.filter(tag => !tag.startsWith('-')).join(' AND ')};
     alert(JSON.stringify(searchRequest));
+
+    fetch(`${BASE_URL}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(searchRequest)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // 
+    })
+    .catch(error => {
+      console.error(error);
+    });
   };
 
   return (
     <div className={css.container}>
-      <form onSubmit={generateSearchRequest} className={css.form}>
+      <form onSubmit={handleSubmit} className={css.form}>
         <input className={css.input}
           type="text"
+          name='include'
           value={includeInput}
-          onChange={handleIncludeInputChange}
+          onChange={handleInputChange}
           onKeyDown={handleIncludeInputKeyPress}
-          placeholder="Include job title"
+          placeholder="Job title include"
         />
         <input className={css.input}
           type="text"
+          name='exclude'
           value={excludeInput}
-          onChange={handleExcludeInputChange}
+          onChange={handleInputChange}
           onKeyDown={handleExcludeInputKeyPress}
-          placeholder="Exclude job title"
+          placeholder="Job title exclude"
         />
         <button type="submit" className={css.formButton}>Search</button>
       </form>
 
       <div className={css.tagContainer}>
         {tags.map((tag, index) => (
-          <div className={css.tag} key={index}>
+          <div className={css.tag} key={tag}>
             {tag}
             <button className={css.tagButton} 
               onClick={() => removeTag(index)}>X</button>

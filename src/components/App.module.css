@@ -13,14 +13,19 @@
 .input {
   width: 80%;
   margin-bottom: 10px;
+  padding: 5px;
 }
 
 .formButton {
   width: 100px;
+  padding: 5px;
 }
 
 .tagContainer {
   margin-top: 20px;
+  height: 300px;
+  outline: 1px solid black;
+  padding: 10px;
 }
 
 .tag {
